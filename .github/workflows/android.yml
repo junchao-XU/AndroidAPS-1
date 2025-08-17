@@ -13,10 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        # 确保获取完整历史，避免 uncommitted changes 错误
-        fetch-depth: 0
+        fetch-depth: 0  # 获取完整历史
 
-    # 🔁 强制清理所有自动修改（关键！解决你的构建失败）
+    # 🔥 强制清理所有自动修改（解决 uncommitted changes 错误）
     - name: Clean uncommitted changes
       run: |
         git reset --hard
@@ -32,21 +31,18 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build Release APK
-      env:
-        # ✅ 通过环境变量传入签名信息（Gradle 会自动读取）
-        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        STORE_FILE: ${{ secrets.STORE_FILE }}
-      run: |
-        # 执行构建
-        ./gradlew assembleFullRelease
+    - name: Build with Gradle
+      # 如果你有签名配置，可以在这里传入 secrets
+      # env:
+      #   STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      #   KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      #   KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      #   STORE_FILE: ${{ secrets.STORE_FILE }}
+      run: ./gradlew assembleFullRelease
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: aaps-apks
         path: app/build/outputs/apk/full/release/
-        # 推荐：压缩文件，避免路径问题
         if-no-files-found: warn
