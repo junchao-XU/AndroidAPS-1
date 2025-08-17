@@ -33,11 +33,11 @@ jobs:
 
     - name: Build with Gradle
       # 如果你有签名配置，可以在这里传入 secrets
-      # env:
-      #   STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-      #   KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-      #   KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      #   STORE_FILE: ${{ secrets.STORE_FILE }}
+      env:
+        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        STORE_FILE: ${{ secrets.STORE_FILE }}
       run: ./gradlew assembleFullRelease
 
     - name: Upload APK
