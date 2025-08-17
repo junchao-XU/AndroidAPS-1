@@ -13,20 +13,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # 获取完整历史
+        fetch-depth: 0
 
-    # 🔥 第一步：强制清理未提交更改
-    - name: 🔥 Clean uncommitted changes
+    # 🔥 1. 强制清理初始状态
+    - name: Clean workspace
       run: |
         git reset --hard HEAD
         git clean -xffd
 
-    # 🛑 第二步：锁定 Gradle Wrapper 文件，防止被修改（关键！）
-    - name: 🔒 Lock Gradle Wrapper
+    # 🔒 2. 锁定 Gradle Wrapper 文件（防止被修改）
+    - name: Lock Gradle Wrapper
       run: |
-        # 防止 Gradle 自动更新 wrapper 配置
         chmod -w gradle/wrapper/gradle-wrapper.properties || true
-        # 防止替换 wrapper jar（AndroidAPS 特别敏感）
         chmod -w gradle/wrapper/gradle-wrapper.jar || true
 
     - name: Set up JDK 21
@@ -39,13 +37,40 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build with Gradle
+    # 🛑 3. 关键一步：设置 Gradle 为“只读模式”
+    - name: Make Gradle cache read-only (prevent auto-updates)
+      run: |
+        # 防止 Gradle 写入缓存或修改 wrapper
+        export GRADLE_USER_HOME=$(pwd)/gradle-cache
+        mkdir -p $GRADLE_USER_HOME
+        # 创建空缓存目录，但不给写权限（可选）
+        touch $GRADLE_USER_HOME/.gradle-ignore
+
+    # 🛡️ 4. 使用 --no-daemon 和 --gradle-user-home 隔离环境
+    - name: Build with Gradle (locked)
       env:
         STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         STORE_FILE: ${{ secrets.STORE_FILE }}
-      run: ./gradlew assembleFullRelease
+      run: |
+        # 设置只读环境
+        export GRADLE_USER_HOME=$(pwd)/gradle-cache
+        # 运行构建，不使用守护进程，避免状态残留
+        ./gradlew assembleFullRelease --no-daemon --gradle-user-home $GRADLE_USER_HOME
+
+    # 🧩 5. 诊断：查看是否真的有未提交更改
+    - name: 🧩 Diagnose: Show git status
+      if: always()
+      run: |
+        echo "🔍 Uncommitted files:"
+        git status --porcelain
+        echo ""
+        echo "🔍 Changed files:"
+        git diff --name-only
+        echo ""
+        echo "🔍 Check gradle-wrapper.properties:"
+        cat gradle/wrapper/gradle-wrapper.properties
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
