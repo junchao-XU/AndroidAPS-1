@@ -60,7 +60,7 @@ jobs:
         ./gradlew assembleFullRelease --no-daemon --gradle-user-home $GRADLE_USER_HOME
 
     # 🧩 5. 诊断：查看是否真的有未提交更改
-    - name: 🧩 Diagnose: Show git status
+    - name: 🧩 Diagnose:Showgitstatus
       if: always()
       run: |
         echo "🔍 Uncommitted files:"
