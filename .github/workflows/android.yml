@@ -15,11 +15,19 @@ jobs:
       with:
         fetch-depth: 0  # 获取完整历史
 
-    # 🔥 强制清理所有自动修改（解决 uncommitted changes 错误）
-    - name: Clean uncommitted changes
+    # 🔥 第一步：强制清理未提交更改
+    - name: 🔥 Clean uncommitted changes
       run: |
-        git reset --hard
+        git reset --hard HEAD
         git clean -xffd
+
+    # 🛑 第二步：锁定 Gradle Wrapper 文件，防止被修改（关键！）
+    - name: 🔒 Lock Gradle Wrapper
+      run: |
+        # 防止 Gradle 自动更新 wrapper 配置
+        chmod -w gradle/wrapper/gradle-wrapper.properties || true
+        # 防止替换 wrapper jar（AndroidAPS 特别敏感）
+        chmod -w gradle/wrapper/gradle-wrapper.jar || true
 
     - name: Set up JDK 21
       uses: actions/setup-java@v3
@@ -32,7 +40,6 @@ jobs:
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      # 如果你有签名配置，可以在这里传入 secrets
       env:
         STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
