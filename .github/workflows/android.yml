@@ -55,7 +55,7 @@ jobs:
         ./gradlew assembleFullRelease --no-daemon --gradle-user-home $GRADLE_USER_HOME
 
     # 🧩 诊断（可选，成功后可删除）
-    - name: 🧩 Diagnose: Show git status
+    - name: 🧩 DiagnoseShowgitstatus
       if: always()
       run: |
         echo "🔍 Uncommitted files:"
